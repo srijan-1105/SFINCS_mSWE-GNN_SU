@@ -18,6 +18,8 @@ Model training and post-training analysis are outside this repository's scope.
 | `models/` | Generated SFINCS case folders |
 | `outputs/` | Generated logs, NPZ datasets, split manifest and graphs |
 | `environment.yml` | Conda setup template inferred from imports |
+| `environment_rebuild.yml` | Adapted environment for rebuilding the SFINCS test-case models (HydroMT-SFINCS 1.x) |
+| `scripts/sfincs_rebuild/`, `notebooks/sfincs_rebuild/` | Build regular 100 m and subgrid 200/400 m models for the test splits |
 | `config/dataset_reference.yaml` | Human-readable reference to settings in the original code |
 | `.github/workflows/source-checks.yml` | Python/notebook syntax checks; no simulations |
 
@@ -64,6 +66,18 @@ The actual split function checks `RP100` first, then `RP010`, then the DEM's dom
 | `test_unseen_domain` | Unseen (`test`, 128×128 selection) | Any non-`RP100`, including `RP010` |
 | `test_unseen_domain_and_rainfall` | Unseen | Contains `RP100` |
 
+
+### Rebuilding the test-case models (regular + subgrid)
+
+`scripts/sfincs_rebuild/` and `notebooks/sfincs_rebuild/build_test_models.ipynb` build, but do not run, SFINCS models for the three test splits (`test_unseen_rainfall`, `test_unseen_domain`, `test_unseen_domain_and_rainfall`; 126 cases) in three variants:
+
+| Variant | Compute grid | Subgrid | Folder |
+| --- | --- | --- | --- |
+| `regular_100m` | 100 m | none; identical inputs to `sfincs.py` | `models/rebuild/regular_100m/` |
+| `subgrid_200m` | 200 m | 25 m pixels (bilinear refinement of the 100 m DEM) | `models/rebuild/subgrid_200m/` |
+| `subgrid_400m` | 400 m | 25 m pixels | `models/rebuild/subgrid_400m/` |
+
+All variants share the time, physics and rainfall settings of the original setup and a closed domain. The case table and build summary are written to `outputs/rebuild/`. Use the environment `environment_rebuild.yml` (`sfincs-uniform-dataset-rebuild`), an adapted copy of `environment.yml` with HydroMT-SFINCS pinned to 1.x and without PyTorch. To run the models locally on Windows, `python scripts/sfincs_rebuild/write_batch.py [--sfincs-exe PATH] [--variants ...] [--splits ...] [--threads N]` writes `models/rebuild/run_sfincs.bat`, which runs each case in its own folder (log in `sfincs_log.txt`), skips cases that already have `sfincs_map.nc`, and records results in `models/rebuild/run_status.txt`. After the runs, `notebooks/sfincs_rebuild/compare_results.ipynb` (functions in `scripts/sfincs_rebuild/compare.py`) compares the subgrid variants with `regular_100m` on maximum water depth and maximum water level: `zsmax` of each run is downscaled onto the 100 m DEM, and per-case RMSE/MAE/bias, maximum-depth error, flood-extent CSI/hit rate/false alarm ratio, zsmax errors (in cells flooded in the reference) and runtimes are written to `outputs/rebuild/comparison.csv`. On Windows, start Jupyter from the activated environment (`conda activate sfincs-uniform-dataset-rebuild`); calling the environment's `python.exe` directly can load mismatched DLLs and crash matplotlib.
 
 ### Graphs and temporal samples
 

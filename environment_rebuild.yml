@@ -1,0 +1,21 @@
+# Adapted from environment.yml (sfincs-uniform-dataset) for rebuilding the SFINCS test-case models
+# (regular 100 m + subgrid 200 m / 400 m). HydroMT-SFINCS is pinned to 1.x because the build code uses
+# the 1.x API (setup_config/write_config, setup_subgrid). Torch / PyG are dropped: no GNN training here.
+name: sfincs-uniform-dataset-rebuild
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - numpy
+  - pandas
+  - matplotlib
+  - xarray
+  - netcdf4
+  - h5netcdf
+  - rioxarray
+  - jupyterlab
+  - ipykernel
+  - tqdm
+  - hydromt>=0.10,<1
+  - hydromt_sfincs>=1.1,<2
